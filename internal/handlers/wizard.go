@@ -118,7 +118,8 @@ func (h *WizardHandler) handleSearchResultCallback(ctx context.Context, q *tgbot
 
 func (h *WizardHandler) handleTaxiCreate(ctx context.Context, m *tgbotapi.Message, st session.State) bool {
 	text := strings.TrimSpace(m.Text)
-	if text == "" {
+	// Contact cards have no m.Text; only allow empty text on the phone step when sharing contact.
+	if text == "" && !(st.Step == session.StepTaxiContact && m.Contact != nil) {
 		_ = h.sendText(m.Chat.ID, "Iltimos, qiymat kiriting.")
 		return true
 	}
@@ -376,7 +377,7 @@ func (h *WizardHandler) postToChannelTaxi(ad models.Ad) (int, error) {
 
 func (h *WizardHandler) handleServiceCreate(ctx context.Context, m *tgbotapi.Message, st session.State) bool {
 	text := strings.TrimSpace(m.Text)
-	if text == "" {
+	if text == "" && !(st.Step == session.StepServiceContact && m.Contact != nil) {
 		_ = h.sendText(m.Chat.ID, "Iltimos, qiymat kiriting.")
 		return true
 	}
@@ -783,8 +784,10 @@ func isPhoneLike(s string) bool { return rePhone.MatchString(strings.TrimSpace(s
 
 func normalizePhone(s string) string {
 	s = strings.TrimSpace(s)
-	s = strings.ReplaceAll(s, " ", "")
+	// Collapse any Unicode whitespace (Telegram contacts often use spaced +998 90 …).
+	s = strings.Join(strings.Fields(s), "")
 	s = strings.ReplaceAll(s, "-", "")
+	s = strings.ReplaceAll(s, "\u00a0", "") // non-breaking space if any slipped through
 	return s
 }
 
