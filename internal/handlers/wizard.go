@@ -308,16 +308,14 @@ func (h *WizardHandler) handleTaxiCallback(ctx context.Context, q *tgbotapi.Call
 		editKB := tgbotapi.NewEditMessageReplyMarkup(msg.Chat.ID, msg.MessageID, empty)
 		_, _ = h.ctx.Bot.Send(editKB)
 
-		// Final UX: remove first "Postni ochish" message.
-		// Send success message with the inline "Postni ochish" button.
+		// Success: restore asosiy reply keyboard (Telegram bitta xabarda inline + reply birga bo‘lmaydi).
 		success := tgbotapi.NewMessage(msg.Chat.ID, "✅ E’lon joylandi!")
-		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
+		success.ReplyMarkup = templates.MainMenuKeyboard()
 		_, _ = h.ctx.Bot.Send(success)
 
-		// Return to main menu silently (reply keyboard).
-		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
-		menu.ReplyMarkup = templates.MainMenuKeyboard()
-		_, _ = h.ctx.Bot.Send(menu)
+		open := tgbotapi.NewMessage(msg.Chat.ID, "📄 Postni ochish:")
+		open.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
+		_, _ = h.ctx.Bot.Send(open)
 		return true
 	}
 	if strings.HasPrefix(data, "cancel:taxi") {
@@ -480,15 +478,13 @@ func (h *WizardHandler) handleServiceCallback(ctx context.Context, q *tgbotapi.C
 		editKB := tgbotapi.NewEditMessageReplyMarkup(msg.Chat.ID, msg.MessageID, empty)
 		_, _ = h.ctx.Bot.Send(editKB)
 
-		// Inline "Postni ochish" button is attached to the success message.
 		success := tgbotapi.NewMessage(msg.Chat.ID, "✅ E’lon joylandi!")
-		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
+		success.ReplyMarkup = templates.MainMenuKeyboard()
 		_, _ = h.ctx.Bot.Send(success)
 
-		// Return to main menu silently (reply keyboard only).
-		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
-		menu.ReplyMarkup = templates.MainMenuKeyboard()
-		_, _ = h.ctx.Bot.Send(menu)
+		open := tgbotapi.NewMessage(msg.Chat.ID, "📄 Postni ochish:")
+		open.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
+		_, _ = h.ctx.Bot.Send(open)
 		return true
 	}
 	if strings.HasPrefix(data, "cancel:service") {
