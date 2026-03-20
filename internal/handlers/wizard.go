@@ -308,14 +308,15 @@ func (h *WizardHandler) handleTaxiCallback(ctx context.Context, q *tgbotapi.Call
 		editKB := tgbotapi.NewEditMessageReplyMarkup(msg.Chat.ID, msg.MessageID, empty)
 		_, _ = h.ctx.Bot.Send(editKB)
 
-		// Success: restore asosiy reply keyboard (Telegram bitta xabarda inline + reply birga bo‘lmaydi).
+		// Success: attach inline "Postni ochish" button under the same message.
+		// Then restore reply keyboard in a separate (tiny) message.
 		success := tgbotapi.NewMessage(msg.Chat.ID, "✅ E’lon joylandi!")
-		success.ReplyMarkup = templates.MainMenuKeyboard()
+		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
 		_, _ = h.ctx.Bot.Send(success)
 
-		open := tgbotapi.NewMessage(msg.Chat.ID, "📄 Postni ochish:")
-		open.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
-		_, _ = h.ctx.Bot.Send(open)
+		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
+		menu.ReplyMarkup = templates.MainMenuKeyboard()
+		_, _ = h.ctx.Bot.Send(menu)
 		return true
 	}
 	if strings.HasPrefix(data, "cancel:taxi") {
@@ -479,12 +480,12 @@ func (h *WizardHandler) handleServiceCallback(ctx context.Context, q *tgbotapi.C
 		_, _ = h.ctx.Bot.Send(editKB)
 
 		success := tgbotapi.NewMessage(msg.Chat.ID, "✅ E’lon joylandi!")
-		success.ReplyMarkup = templates.MainMenuKeyboard()
+		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
 		_, _ = h.ctx.Bot.Send(success)
 
-		open := tgbotapi.NewMessage(msg.Chat.ID, "📄 Postni ochish:")
-		open.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
-		_, _ = h.ctx.Bot.Send(open)
+		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
+		menu.ReplyMarkup = templates.MainMenuKeyboard()
+		_, _ = h.ctx.Bot.Send(menu)
 		return true
 	}
 	if strings.HasPrefix(data, "cancel:service") {
