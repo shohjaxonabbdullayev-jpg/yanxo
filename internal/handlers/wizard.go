@@ -314,7 +314,8 @@ func (h *WizardHandler) handleTaxiCallback(ctx context.Context, q *tgbotapi.Call
 		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
 		_, _ = h.ctx.Bot.Send(success)
 
-		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
+		// Use a visible text so the message is not dropped by clients.
+		menu := tgbotapi.NewMessage(msg.Chat.ID, "Asosiy menyu:")
 		menu.ReplyMarkup = templates.MainMenuKeyboard()
 		_, _ = h.ctx.Bot.Send(menu)
 		return true
@@ -483,7 +484,8 @@ func (h *WizardHandler) handleServiceCallback(ctx context.Context, q *tgbotapi.C
 		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
 		_, _ = h.ctx.Bot.Send(success)
 
-		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
+		// Use a visible text so the message is not dropped by clients.
+		menu := tgbotapi.NewMessage(msg.Chat.ID, "Asosiy menyu:")
 		menu.ReplyMarkup = templates.MainMenuKeyboard()
 		_, _ = h.ctx.Bot.Send(menu)
 		return true
