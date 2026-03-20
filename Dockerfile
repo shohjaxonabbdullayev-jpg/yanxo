@@ -30,6 +30,10 @@ RUN apk add --no-cache ca-certificates tzdata \
 
 WORKDIR /app
 
+# HTTP health: / , /health , /healthz → {"status":"ok"} (override with PORT / HEALTH_ADDR)
+EXPOSE 8080
+ENV PORT=8080
+
 COPY --from=builder /out/yanxo-bot /app/yanxo-bot
 COPY migrations /app/migrations
 

@@ -14,6 +14,9 @@ type Config struct {
 	ChannelUsername string
 	TursoDatabaseURL string
 	TursoAuthToken  string
+	// HTTPListenAddr is a bind address for the optional health HTTP server, e.g. ":8080".
+	// Set via HEALTH_ADDR or PORT (Render). Empty means the health server is disabled.
+	HTTPListenAddr string
 }
 
 func FromEnv() (Config, error) {
@@ -49,6 +52,13 @@ func FromEnv() (Config, error) {
 	if c.TursoAuthToken == "" {
 		return c, errors.New("TURSO_AUTH_TOKEN is required")
 	}
+
+	addr := strings.TrimSpace(os.Getenv("HEALTH_ADDR"))
+	port := strings.TrimSpace(os.Getenv("PORT"))
+	if addr == "" && port != "" {
+		addr = ":" + port
+	}
+	c.HTTPListenAddr = addr
 
 	return c, nil
 }

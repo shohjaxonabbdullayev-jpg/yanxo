@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/http"
 	"path/filepath"
 	"time"
 
@@ -111,7 +112,15 @@ func (a *App) Run(ctx context.Context) error {
 	}
 
 	log.Printf("bot started as @%s", a.bot.Self.UserName)
+
+	var healthSrv *http.Server
+	if addr := a.cfg.HTTPListenAddr; addr != "" {
+		healthSrv = startHealthServer(addr)
+	}
 	err = a.loop(ctx)
+	if healthSrv != nil {
+		shutdownHealthServer(context.Background(), healthSrv)
+	}
 	_ = a.db.Close()
 	if errors.Is(err, context.Canceled) {
 		return nil
