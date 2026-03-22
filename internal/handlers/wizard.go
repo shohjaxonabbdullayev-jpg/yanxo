@@ -314,8 +314,7 @@ func (h *WizardHandler) handleTaxiCallback(ctx context.Context, q *tgbotapi.Call
 		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
 		_, _ = h.ctx.Bot.Send(success)
 
-		// Use a visible text so the message is not dropped by clients.
-		menu := tgbotapi.NewMessage(msg.Chat.ID, "Asosiy menyu:")
+		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
 		menu.ReplyMarkup = templates.MainMenuKeyboard()
 		_, _ = h.ctx.Bot.Send(menu)
 		return true
@@ -383,11 +382,66 @@ func (h *WizardHandler) handleServiceCreate(ctx context.Context, m *tgbotapi.Mes
 	}
 
 	switch st.Step {
-	case session.StepServiceType:
+	case session.StepServiceCategory:
+		if text == templates.ServiceWizardCancel {
+			h.ctx.Store.Clear(m.From.ID)
+			out := tgbotapi.NewMessage(m.Chat.ID, "Bekor qilindi. Asosiy menyu.")
+			out.ReplyMarkup = templates.MainMenuKeyboard()
+			_, _ = h.ctx.Bot.Send(out)
+			return true
+		}
+		if text == templates.ServiceTypeOtherBtn {
+			st.Step = session.StepServiceCustomType
+			h.ctx.Store.Set(m.From.ID, st)
+			_ = h.sendMarkup(m.Chat.ID, "Xizmat turini yozing (masalan: santexnik, elektrik):", templates.ServiceCustomTypeKeyboard())
+			return true
+		}
+		cat, ok := templates.ServiceCategoryFromButton(text)
+		if !ok {
+			_ = h.sendMarkup(m.Chat.ID, "Iltimos, pastdagi tugmalardan tanlang.", templates.ServiceCategoryKeyboard())
+			return true
+		}
+		st.Service.PickCategory = cat
+		st.Step = session.StepServicePick
+		h.ctx.Store.Set(m.From.ID, st)
+		_ = h.sendMarkup(m.Chat.ID, "Aniq xizmat turini tanlang:", templates.ServicePickKeyboard(cat))
+		return true
+	case session.StepServicePick:
+		if text == templates.ServicePickBackBtn {
+			st.Service.PickCategory = ""
+			st.Step = session.StepServiceCategory
+			h.ctx.Store.Set(m.From.ID, st)
+			_ = h.sendMarkup(m.Chat.ID, "Xizmat yo‘nalishini tanlang:", templates.ServiceCategoryKeyboard())
+			return true
+		}
+		if !templates.IsKnownServicePick(st.Service.PickCategory, text) {
+			_ = h.sendMarkup(m.Chat.ID, "Iltimos, ro‘yxatdan tanlang yoki «⬅️ Kategoriyalar».", templates.ServicePickKeyboard(st.Service.PickCategory))
+			return true
+		}
+		st.Service.ServiceType = text
+		st.Service.PickCategory = ""
+		st.Step = session.StepServiceArea
+		h.ctx.Store.Set(m.From.ID, st)
+		_ = h.sendTextRemoveKeyboard(m.Chat.ID, "Hudud qayer? (masalan: Chilonzor, Samarqand)")
+		return true
+	case session.StepServiceCustomType:
+		if text == templates.ServicePickBackBtn {
+			st.Step = session.StepServiceCategory
+			h.ctx.Store.Set(m.From.ID, st)
+			_ = h.sendMarkup(m.Chat.ID, "Xizmat yo‘nalishini tanlang:", templates.ServiceCategoryKeyboard())
+			return true
+		}
+		if text == templates.ServiceWizardCancel {
+			h.ctx.Store.Clear(m.From.ID)
+			out := tgbotapi.NewMessage(m.Chat.ID, "Bekor qilindi. Asosiy menyu.")
+			out.ReplyMarkup = templates.MainMenuKeyboard()
+			_, _ = h.ctx.Bot.Send(out)
+			return true
+		}
 		st.Service.ServiceType = text
 		st.Step = session.StepServiceArea
 		h.ctx.Store.Set(m.From.ID, st)
-		_ = h.sendText(m.Chat.ID, "Hudud qayer? (masalan: Chilonzor, Samarqand)")
+		_ = h.sendTextRemoveKeyboard(m.Chat.ID, "Hudud qayer? (masalan: Chilonzor, Samarqand)")
 		return true
 	case session.StepServiceArea:
 		st.Service.Area = text
@@ -484,8 +538,7 @@ func (h *WizardHandler) handleServiceCallback(ctx context.Context, q *tgbotapi.C
 		success.ReplyMarkup = templates.PostOpenInline(ad, h.ctx.Cfg.ChannelID, h.ctx.Cfg.ChannelUsername)
 		_, _ = h.ctx.Bot.Send(success)
 
-		// Use a visible text so the message is not dropped by clients.
-		menu := tgbotapi.NewMessage(msg.Chat.ID, "Asosiy menyu:")
+		menu := tgbotapi.NewMessage(msg.Chat.ID, "\u200b")
 		menu.ReplyMarkup = templates.MainMenuKeyboard()
 		_, _ = h.ctx.Bot.Send(menu)
 		return true
@@ -736,6 +789,16 @@ func (h *WizardHandler) sendText(chatID int64, text string) error {
 	_, err := h.ctx.Bot.Send(tgbotapi.NewMessage(chatID, text))
 	if err != nil {
 		log.Printf("sendText error chat_id=%d: %v", chatID, err)
+	}
+	return err
+}
+
+func (h *WizardHandler) sendTextRemoveKeyboard(chatID int64, text string) error {
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
+	_, err := h.ctx.Bot.Send(msg)
+	if err != nil {
+		log.Printf("sendTextRemoveKeyboard error chat_id=%d: %v", chatID, err)
 	}
 	return err
 }

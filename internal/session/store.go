@@ -28,8 +28,10 @@ const (
 	StepTaxiPreview       Step = "taxi_preview"
 
 	// service create
-	StepServiceType    Step = "service_type"
-	StepServiceArea    Step = "service_area"
+	StepServiceCategory   Step = "service_category"
+	StepServicePick       Step = "service_pick"
+	StepServiceCustomType Step = "service_custom_type"
+	StepServiceArea       Step = "service_area"
 	StepServiceNote    Step = "service_note"
 	StepServiceContact Step = "service_contact"
 	StepServicePreview Step = "service_preview"
@@ -54,9 +56,11 @@ type TaxiDraft struct {
 
 type ServiceDraft struct {
 	ServiceType string
-	Area        string
-	Note        *string
-	Contact     *string
+	// PickCategory: ServicePickCatBuild / auto / wood — faqat StepServicePick paytida.
+	PickCategory string
+	Area         string
+	Note         *string
+	Contact      *string
 }
 
 type State struct {

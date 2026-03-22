@@ -46,8 +46,10 @@ func (h *StartHandler) RouteMenu(ctx context.Context, m *tgbotapi.Message) error
 		_, err := h.ctx.Bot.Send(msg)
 		return err
 	case templates.BtnServiceCreate:
-		h.ctx.Store.Set(m.From.ID, session.State{Flow: session.FlowServiceCreate, Step: session.StepServiceType})
-		_, err := h.ctx.Bot.Send(tgbotapi.NewMessage(m.Chat.ID, "Xizmat turi nima? (masalan: santexnik, elektrik)"))
+		h.ctx.Store.Set(m.From.ID, session.State{Flow: session.FlowServiceCreate, Step: session.StepServiceCategory})
+		msg := tgbotapi.NewMessage(m.Chat.ID, "Xizmat yo‘nalishini tanlang:")
+		msg.ReplyMarkup = templates.ServiceCategoryKeyboard()
+		_, err := h.ctx.Bot.Send(msg)
 		return err
 	case templates.BtnSearch:
 		msg := tgbotapi.NewMessage(m.Chat.ID, "Nimani qidiramiz?")
