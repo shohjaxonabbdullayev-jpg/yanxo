@@ -36,8 +36,9 @@ func SearchMenuKeyboard() tgbotapi.ReplyKeyboardMarkup {
 	return kb
 }
 
-func CityKeyboard() tgbotapi.ReplyKeyboardMarkup {
-	kb := tgbotapi.NewReplyKeyboard(
+// cityPlaceKeyboardRows — taksi/usta uchun umumiy shahar/hudud tugmalari.
+func cityPlaceKeyboardRows() [][]tgbotapi.KeyboardButton {
+	return [][]tgbotapi.KeyboardButton{
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("Xovos"),
 			tgbotapi.NewKeyboardButton("Yangiyer"),
@@ -49,7 +50,29 @@ func CityKeyboard() tgbotapi.ReplyKeyboardMarkup {
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("Boshqa"),
 		),
-	)
+	}
+}
+
+func CityKeyboard() tgbotapi.ReplyKeyboardMarkup {
+	kb := tgbotapi.NewReplyKeyboard(cityPlaceKeyboardRows()...)
+	kb.ResizeKeyboard = true
+	kb.OneTimeKeyboard = true
+	return kb
+}
+
+// ServicePlaceKeyboard — usta e’loni / usta qidiruv: hudud tanlash (shahar + «Boshqa»).
+func ServicePlaceKeyboard() tgbotapi.ReplyKeyboardMarkup {
+	return CityKeyboard()
+}
+
+// ServiceSearchAreaKeyboard — usta qidiruv: hudud tugmalari + Orqaga / Bekor.
+func ServiceSearchAreaKeyboard() tgbotapi.ReplyKeyboardMarkup {
+	rows := cityPlaceKeyboardRows()
+	rows = append(rows, tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton(BtnBack),
+		tgbotapi.NewKeyboardButton("❌ Bekor qilish"),
+	))
+	kb := tgbotapi.NewReplyKeyboard(rows...)
 	kb.ResizeKeyboard = true
 	kb.OneTimeKeyboard = true
 	return kb

@@ -84,9 +84,11 @@ func (h *StartHandler) RouteMenu(ctx context.Context, m *tgbotapi.Message) error
 			return err
 		}
 		if text == templates.BtnSearchService {
-			st := session.State{Flow: session.FlowServiceSearch, Step: session.StepServiceSearchType}
+			st := session.State{Flow: session.FlowServiceSearch, Step: session.StepServiceSearchCategory}
 			h.ctx.Store.Set(m.From.ID, st)
-			_, err := h.ctx.Bot.Send(tgbotapi.NewMessage(m.Chat.ID, "Xizmat turi?"))
+			msg := tgbotapi.NewMessage(m.Chat.ID, "Qidirish: xizmat yo‘nalishini tanlang:")
+			msg.ReplyMarkup = templates.ServiceCategoryKeyboard()
+			_, err := h.ctx.Bot.Send(msg)
 			return err
 		}
 		if text == templates.BtnBack {

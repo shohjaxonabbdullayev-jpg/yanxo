@@ -422,7 +422,7 @@ func (h *WizardHandler) handleServiceCreate(ctx context.Context, m *tgbotapi.Mes
 		st.Service.PickCategory = ""
 		st.Step = session.StepServiceArea
 		h.ctx.Store.Set(m.From.ID, st)
-		_ = h.sendTextRemoveKeyboard(m.Chat.ID, "Hudud qayer? (masalan: Chilonzor, Samarqand)")
+		_ = h.sendMarkup(m.Chat.ID, "Hudud qayer? Shahar/tumanni tanlang yoki «Boshqa» ni bosing.", templates.ServicePlaceKeyboard())
 		return true
 	case session.StepServiceCustomType:
 		if text == templates.ServicePickBackBtn {
@@ -441,9 +441,13 @@ func (h *WizardHandler) handleServiceCreate(ctx context.Context, m *tgbotapi.Mes
 		st.Service.ServiceType = text
 		st.Step = session.StepServiceArea
 		h.ctx.Store.Set(m.From.ID, st)
-		_ = h.sendTextRemoveKeyboard(m.Chat.ID, "Hudud qayer? (masalan: Chilonzor, Samarqand)")
+		_ = h.sendMarkup(m.Chat.ID, "Hudud qayer? Shahar/tumanni tanlang yoki «Boshqa» ni bosing.", templates.ServicePlaceKeyboard())
 		return true
 	case session.StepServiceArea:
+		if strings.EqualFold(text, "boshqa") {
+			_ = h.sendText(m.Chat.ID, "Boshqa hudud nomini yozing (masalan: Chilonzor, Samarqand):")
+			return true
+		}
 		st.Service.Area = text
 		st.Step = session.StepServiceNote
 		h.ctx.Store.Set(m.From.ID, st)
@@ -683,19 +687,76 @@ func (h *WizardHandler) handleServiceSearch(ctx context.Context, m *tgbotapi.Mes
 		return true
 	}
 	switch st.Step {
-	case session.StepServiceSearchType:
+	case session.StepServiceSearchCategory:
+		if text == templates.ServiceWizardCancel {
+			h.ctx.Store.Clear(m.From.ID)
+			out := tgbotapi.NewMessage(m.Chat.ID, "Bekor qilindi. Asosiy menyu.")
+			out.ReplyMarkup = templates.MainMenuKeyboard()
+			_, _ = h.ctx.Bot.Send(out)
+			return true
+		}
+		if text == templates.ServiceTypeOtherBtn {
+			st.Step = session.StepServiceSearchCustomType
+			h.ctx.Store.Set(m.From.ID, st)
+			_ = h.sendMarkup(m.Chat.ID, "Qidirilayotgan xizmat turini yozing:", templates.ServiceCustomTypeKeyboard())
+			return true
+		}
+		cat, ok := templates.ServiceCategoryFromButton(text)
+		if !ok {
+			_ = h.sendMarkup(m.Chat.ID, "Iltimos, pastdagi tugmalardan tanlang.", templates.ServiceCategoryKeyboard())
+			return true
+		}
+		st.Search.ServicePickCategory = cat
+		st.Step = session.StepServiceSearchPick
+		h.ctx.Store.Set(m.From.ID, st)
+		_ = h.sendMarkup(m.Chat.ID, "Aniq xizmat turini tanlang:", templates.ServicePickKeyboard(cat))
+		return true
+	case session.StepServiceSearchPick:
+		if text == templates.ServicePickBackBtn {
+			st.Search.ServicePickCategory = ""
+			st.Step = session.StepServiceSearchCategory
+			h.ctx.Store.Set(m.From.ID, st)
+			_ = h.sendMarkup(m.Chat.ID, "Qidirish: xizmat yo‘nalishini tanlang:", templates.ServiceCategoryKeyboard())
+			return true
+		}
+		if !templates.IsKnownServicePick(st.Search.ServicePickCategory, text) {
+			_ = h.sendMarkup(m.Chat.ID, "Iltimos, ro‘yxatdan tanlang yoki «⬅️ Kategoriyalar».", templates.ServicePickKeyboard(st.Search.ServicePickCategory))
+			return true
+		}
+		st.Search.ServiceType = text
+		st.Search.ServicePickCategory = ""
+		st.Step = session.StepServiceSearchArea
+		h.ctx.Store.Set(m.From.ID, st)
+		_ = h.sendMarkup(m.Chat.ID, "Hududni tanlang yoki «Boshqa» ni bosing.", templates.ServiceSearchAreaKeyboard())
+		return true
+	case session.StepServiceSearchCustomType:
+		if text == templates.ServicePickBackBtn {
+			st.Step = session.StepServiceSearchCategory
+			h.ctx.Store.Set(m.From.ID, st)
+			_ = h.sendMarkup(m.Chat.ID, "Qidirish: xizmat yo‘nalishini tanlang:", templates.ServiceCategoryKeyboard())
+			return true
+		}
+		if text == templates.ServiceWizardCancel {
+			h.ctx.Store.Clear(m.From.ID)
+			out := tgbotapi.NewMessage(m.Chat.ID, "Bekor qilindi. Asosiy menyu.")
+			out.ReplyMarkup = templates.MainMenuKeyboard()
+			_, _ = h.ctx.Bot.Send(out)
+			return true
+		}
 		st.Search.ServiceType = text
 		st.Step = session.StepServiceSearchArea
 		h.ctx.Store.Set(m.From.ID, st)
-		_ = h.sendText(m.Chat.ID, "Hudud? (masalan: Chilonzor, Samarqand)")
+		_ = h.sendMarkup(m.Chat.ID, "Hududni tanlang yoki «Boshqa» ni bosing.", templates.ServiceSearchAreaKeyboard())
 		return true
 	case session.StepServiceSearchArea:
 		// Recovery keyboard actions for service no-results UX.
 		if strings.EqualFold(text, templates.BtnBack) {
-			// Go back to step 1: service type.
-			st.Step = session.StepServiceSearchType
+			st.Search.ServiceArea = ""
+			st.Search.ServiceType = ""
+			st.Search.ServicePickCategory = ""
+			st.Step = session.StepServiceSearchCategory
 			h.ctx.Store.Set(m.From.ID, st)
-			_ = h.sendText(m.Chat.ID, "Xizmat turi?")
+			_ = h.sendMarkup(m.Chat.ID, "Qidirish: xizmat yo‘nalishini tanlang:", templates.ServiceCategoryKeyboard())
 			return true
 		}
 		if text == "❌ Bekor qilish" {
@@ -703,6 +764,10 @@ func (h *WizardHandler) handleServiceSearch(ctx context.Context, m *tgbotapi.Mes
 			out := tgbotapi.NewMessage(m.Chat.ID, "Bekor qilindi. Asosiy menyu.")
 			out.ReplyMarkup = templates.MainMenuKeyboard()
 			_, _ = h.ctx.Bot.Send(out)
+			return true
+		}
+		if strings.EqualFold(text, "boshqa") {
+			_ = h.sendText(m.Chat.ID, "Boshqa hudud nomini yozing:")
 			return true
 		}
 
@@ -725,8 +790,8 @@ func (h *WizardHandler) handleServiceSearch(ctx context.Context, m *tgbotapi.Mes
 			_, _ = h.ctx.Bot.Send(msg)
 
 			// 2) Ask again immediately with keyboard
-			ask := tgbotapi.NewMessage(m.Chat.ID, "Hudud? (masalan: Chilonzor, Samarqand)")
-			ask.ReplyMarkup = templates.ServiceSearchNoResultsKeyboard()
+			ask := tgbotapi.NewMessage(m.Chat.ID, "Hududni qayta tanlang yoki «Boshqa» ni bosing.")
+			ask.ReplyMarkup = templates.ServiceSearchAreaKeyboard()
 			_, _ = h.ctx.Bot.Send(ask)
 			return true
 		}

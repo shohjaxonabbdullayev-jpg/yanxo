@@ -39,8 +39,10 @@ const (
 	// search
 	StepTaxiSearchFrom   Step = "taxi_search_from"
 	StepTaxiSearchTo     Step = "taxi_search_to"
-	StepServiceSearchType Step = "service_search_type"
-	StepServiceSearchArea Step = "service_search_area"
+	StepServiceSearchCategory   Step = "service_search_category"
+	StepServiceSearchPick       Step = "service_search_pick"
+	StepServiceSearchCustomType Step = "service_search_custom_type"
+	StepServiceSearchArea       Step = "service_search_area"
 )
 
 type TaxiDraft struct {
@@ -77,8 +79,9 @@ type SearchDraft struct {
 	TaxiFrom string
 	TaxiTo   string
 
-	ServiceType string
-	ServiceArea string
+	ServiceType         string
+	ServiceArea         string
+	ServicePickCategory string // ServicePickCatBuild / auto / wood — StepServiceSearchPick
 }
 
 type Store struct {
