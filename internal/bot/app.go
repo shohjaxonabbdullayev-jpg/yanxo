@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -45,6 +46,13 @@ func (a *App) Run(ctx context.Context) error {
 	var healthSrv *http.Server
 	if addr := a.cfg.HTTPListenAddr; addr != "" {
 		healthSrv = startHealthServer(addr)
+	}
+
+	// Webhook + long polling aralashmasin; eski pending update’lar tozalanadi.
+	if _, whErr := a.bot.Request(tgbotapi.DeleteWebhookConfig{DropPendingUpdates: true}); whErr != nil {
+		log.Printf("deleteWebhook warning: %v", whErr)
+	} else {
+		log.Printf("telegram: webhook o‘chirildi, long polling rejimi")
 	}
 
 	db, err := libsqlrepo.Open(ctx, a.cfg.TursoDatabaseURL, a.cfg.TursoAuthToken)
@@ -156,7 +164,11 @@ func (a *App) loop(ctx context.Context) error {
 
 		updates, err := a.bot.GetUpdates(u)
 		if err != nil {
-			log.Printf("getUpdates error: %v (retry in %s)", err, backoff)
+			if strings.Contains(err.Error(), "Conflict") {
+				log.Printf("getUpdates Conflict: boshqa joyda ham shu BOT_TOKEN bilan bot ishlamoqda (mahalliy go run + Render yoki 2 ta deploy). Bittasini to‘xtating. Xato: %v", err)
+			} else {
+				log.Printf("getUpdates error: %v (retry in %s)", err, backoff)
+			}
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
