@@ -9,14 +9,21 @@ import (
 
 func newHealthMux() http.Handler {
 	mux := http.NewServeMux()
-	h := func(w http.ResponseWriter, _ *http.Request) {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
+		if r.Method == http.MethodGet {
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		}
 	}
-	mux.HandleFunc("GET /", h)
-	mux.HandleFunc("GET /health", h)
-	mux.HandleFunc("GET /healthz", h)
+	// Path-only registration so HEAD works; /{$} = faqat "/", barcha pathlarni yutib qo‘ymaslik uchun.
+	mux.HandleFunc("/{$}", h)
+	mux.HandleFunc("/health", h)
+	mux.HandleFunc("/healthz", h)
 	return mux
 }
 

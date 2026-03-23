@@ -41,8 +41,17 @@ func NewApp(cfg config.Config) (*App, error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
+	// Listen on PORT before DB/migrations/Telegram — otherwise Render health checks get 502 during startup.
+	var healthSrv *http.Server
+	if addr := a.cfg.HTTPListenAddr; addr != "" {
+		healthSrv = startHealthServer(addr)
+	}
+
 	db, err := libsqlrepo.Open(ctx, a.cfg.TursoDatabaseURL, a.cfg.TursoAuthToken)
 	if err != nil {
+		if healthSrv != nil {
+			shutdownHealthServer(context.Background(), healthSrv)
+		}
 		return err
 	}
 	a.db = db
@@ -63,6 +72,9 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}
 	if migErr != nil {
+		if healthSrv != nil {
+			shutdownHealthServer(context.Background(), healthSrv)
+		}
 		_ = a.db.Close()
 		return migErr
 	}
@@ -86,6 +98,9 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}
 	if seedErr != nil {
+		if healthSrv != nil {
+			shutdownHealthServer(context.Background(), healthSrv)
+		}
 		_ = a.db.Close()
 		return seedErr
 	}
@@ -113,10 +128,6 @@ func (a *App) Run(ctx context.Context) error {
 
 	log.Printf("bot started as @%s", a.bot.Self.UserName)
 
-	var healthSrv *http.Server
-	if addr := a.cfg.HTTPListenAddr; addr != "" {
-		healthSrv = startHealthServer(addr)
-	}
 	err = a.loop(ctx)
 	if healthSrv != nil {
 		shutdownHealthServer(context.Background(), healthSrv)
