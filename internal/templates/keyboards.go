@@ -151,7 +151,6 @@ func PhoneRequestKeyboard() tgbotapi.ReplyKeyboardMarkup {
 	btn := tgbotapi.NewKeyboardButtonContact("📲 Telefonni ulashish")
 	kb := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(btn),
-		tgbotapi.NewKeyboardButtonRow(tgbotapi.NewKeyboardButton("⏭ O‘tkazib yuborish")),
 	)
 	kb.ResizeKeyboard = true
 	kb.OneTimeKeyboard = true
@@ -165,7 +164,6 @@ func ContactChoiceWithUsername() tgbotapi.InlineKeyboardMarkup {
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("📞 Telefon kiritaman", "contact:enter_phone"),
-			tgbotapi.NewInlineKeyboardButtonData("⏭ O‘tkazib yuborish", "contact:skip"),
 		),
 	)
 }
@@ -174,7 +172,6 @@ func ContactChoiceNoUsername() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("📞 Telefon kiritish", "contact:enter_phone"),
-			tgbotapi.NewInlineKeyboardButtonData("⏭ O‘tkazib yuborish", "contact:skip"),
 		),
 	)
 }

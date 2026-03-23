@@ -228,15 +228,9 @@ func (h *WizardHandler) handleTaxiCreate(ctx context.Context, m *tgbotapi.Messag
 			h.ctx.Store.Set(m.From.ID, st)
 			return h.showTaxiPreview(ctx, m.Chat.ID, m.From, st)
 		}
-		if text == "⏭ O‘tkazib yuborish" {
-			st.Taxi.Contact = nil
-			st.Step = session.StepTaxiPreview
-			h.ctx.Store.Set(m.From.ID, st)
-			return h.showTaxiPreview(ctx, m.Chat.ID, m.From, st)
-		}
 		// manual phone input
 		if !isPhoneLike(text) {
-			_ = h.sendText(m.Chat.ID, "Telefon noto‘g‘ri ko‘rinadi. Masalan: +998901234567 yoki 90 123 45 67\nYoki “⏭ O‘tkazib yuborish” ni bosing.")
+			_ = h.sendText(m.Chat.ID, "Telefon noto‘g‘ri ko‘rinadi. Masalan: +998901234567 yoki 90 123 45 67")
 			return true
 		}
 		contact := normalizePhone(text)
@@ -277,11 +271,6 @@ func (h *WizardHandler) handleTaxiCallback(ctx context.Context, q *tgbotapi.Call
 			// ask for phone share or input
 			_ = h.sendMarkup(msg.Chat.ID, "Telefon yuboring yoki raqamni yozing:", templates.PhoneRequestKeyboard())
 			return true
-		case "skip":
-			st.Taxi.Contact = nil
-			st.Step = session.StepTaxiPreview
-			h.ctx.Store.Set(q.From.ID, st)
-			return h.showTaxiPreview(ctx, msg.Chat.ID, q.From, st)
 		}
 	}
 
@@ -470,14 +459,8 @@ func (h *WizardHandler) handleServiceCreate(ctx context.Context, m *tgbotapi.Mes
 			h.ctx.Store.Set(m.From.ID, st)
 			return h.showServicePreview(ctx, m.Chat.ID, m.From, st)
 		}
-		if text == "⏭ O‘tkazib yuborish" {
-			st.Service.Contact = nil
-			st.Step = session.StepServicePreview
-			h.ctx.Store.Set(m.From.ID, st)
-			return h.showServicePreview(ctx, m.Chat.ID, m.From, st)
-		}
 		if !isPhoneLike(text) {
-			_ = h.sendText(m.Chat.ID, "Telefon noto‘g‘ri ko‘rinadi. Masalan: +998901234567 yoki 90 123 45 67\nYoki “⏭ O‘tkazib yuborish” ni bosing.")
+			_ = h.sendText(m.Chat.ID, "Telefon noto‘g‘ri ko‘rinadi. Masalan: +998901234567 yoki 90 123 45 67")
 			return true
 		}
 		contact := normalizePhone(text)
@@ -510,11 +493,6 @@ func (h *WizardHandler) handleServiceCallback(ctx context.Context, q *tgbotapi.C
 			h.ctx.Store.Set(q.From.ID, st)
 			_ = h.sendMarkup(msg.Chat.ID, "Telefon yuboring yoki raqamni yozing:", templates.PhoneRequestKeyboard())
 			return true
-		case "skip":
-			st.Service.Contact = nil
-			st.Step = session.StepServicePreview
-			h.ctx.Store.Set(q.From.ID, st)
-			return h.showServicePreview(ctx, msg.Chat.ID, q.From, st)
 		}
 	}
 
